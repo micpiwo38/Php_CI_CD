@@ -1,0 +1,42 @@
+# Nom du workflow
+name: PHP Simple CI_CD
+
+# 1. TRIGGER => Configurer quand le workflow s'execute
+on:
+    # Lors du push
+    push:
+        # Choix de la branche => ici main
+        branches: ["main"]
+
+# 2. Le jobs = la tache a executer (1 ou plusieurs)
+jobs:
+    build-and-test:
+        # Environement dans lequels les jobs vont s'executer
+        runs-on: ubuntu-latest
+
+        # 3. Les steps => sequences des actions = un name + uses
+        steps:
+            # A. Cloner un depot
+            - name: Checkout Code
+              uses: actions/checkout@v4 # Action github pour cloner un depot
+
+            # B. Environement PHP
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: "8.3.14"
+                  extensions: mbstring, xml, ctype, iconv # Extensions de base souvent requises par PHPUnit/PHPStan
+                  coverage: none
+
+            # C. Installer les dépendances Composer
+            - name: Install Dependencies
+              run: composer install --prefer-dist --no-progress
+
+            # D. Exécuter PHPStan (Analyse statique)
+            - name: Run PHPStan
+              run: vendor/bin/phpstan analyse src --level=5
+              # Note : Remplace "src" par le dossier de ton code (ex: app, lib...) si nécessaire.
+
+            # E. Exécuter PHPUnit (Tests unitaires)
+            - name: Run PHPUnit
+              run: vendor/bin/phpunit
